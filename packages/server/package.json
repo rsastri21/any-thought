@@ -31,7 +31,8 @@
     "drizzle-orm": "^0.44.4",
     "effect": "latest",
     "pg": "^8.16.3",
-    "postgres": "^3.4.7"
+    "postgres": "^3.4.7",
+    "redis": "^5.8.0"
   },
   "effect": {
     "generateExports": {
