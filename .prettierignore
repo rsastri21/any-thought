@@ -1,0 +1,3 @@
+*.yml
+*.yaml
+packages/server/src/db/migrations/

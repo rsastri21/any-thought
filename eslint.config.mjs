@@ -25,7 +25,6 @@ export default [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:@typescript-eslint/recommended",
-    "plugin:@effect/recommended",
   ),
   {
     plugins: {
@@ -112,21 +111,6 @@ export default [
       "@typescript-eslint/no-array-constructor": "off",
       "@typescript-eslint/no-use-before-define": "off",
       "@typescript-eslint/no-namespace": "off",
-
-      "@effect/dprint": [
-        "error",
-        {
-          config: {
-            indentWidth: 2,
-            lineWidth: 120,
-            semiColons: "asi",
-            quoteStyle: "alwaysDouble",
-            trailingCommas: "never",
-            operatorPosition: "maintain",
-            "arrowFunction.useParentheses": "force",
-          },
-        },
-      ],
     },
   },
 ];

@@ -1,8 +1,8 @@
+import { config as dotenv } from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { Config, Data, Effect, Redacted } from "effect";
 import postgres from "postgres";
-import { config as dotenv } from "dotenv";
 
 dotenv({
   path: "../../.env",
