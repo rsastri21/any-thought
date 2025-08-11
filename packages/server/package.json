@@ -1,0 +1,52 @@
+{
+  "name": "@org/server",
+  "version": "0.0.0",
+  "type": "module",
+  "license": "MIT",
+  "description": "Package containing NodeJS server",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rsastri21/any-thought.git",
+    "directory": "packages/server"
+  },
+  "scripts": {
+    "codegen": "build-utils prepare-v2",
+    "build": "pnpm build-esm && pnpm build-annotate && pnpm build-cjs && build-utils pack-v2",
+    "build-esm": "tsc -b tsconfig.build.json",
+    "build-cjs": "babel build/esm --plugins @babel/transform-export-namespace-from --plugins @babel/transform-modules-commonjs --out-dir build/cjs --source-maps",
+    "build-annotate": "babel build/esm --plugins annotate-pure-calls --out-dir build/esm --source-maps",
+    "check": "tsc -b tsconfig.json",
+    "test": "vitest",
+    "coverage": "vitest --coverage",
+    "db:start": "docker-compose up -d",
+    "db:stop": "docker-compose down",
+    "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
+    "db:migrate": "tsx ./src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@effect/platform": "latest",
+    "@effect/platform-node": "latest",
+    "@org/domain": "workspace:^",
+    "dotenv": "^17.2.1",
+    "drizzle-orm": "^0.44.4",
+    "effect": "latest",
+    "pg": "^8.16.3",
+    "postgres": "^3.4.7"
+  },
+  "effect": {
+    "generateExports": {
+      "include": [
+        "**/*.ts"
+      ]
+    },
+    "generateIndex": {
+      "include": [
+        "**/*.ts"
+      ]
+    }
+  },
+  "devDependencies": {
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.4"
+  }
+}
