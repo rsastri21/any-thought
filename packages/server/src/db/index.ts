@@ -1,2 +1,2 @@
 export * from "./database.js";
-export * from "./schema.js";
+export * as DbSchema from "./schema.js";

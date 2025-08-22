@@ -51,5 +51,8 @@
     "patchedDependencies": {
       "babel-plugin-annotate-pure-calls@0.4.0": "patches/babel-plugin-annotate-pure-calls@0.4.0.patch"
     }
+  },
+  "dependencies": {
+    "@effect/platform": "^0.90.5"
   }
 }
