@@ -1,7 +1,8 @@
 import { Effect, Schema } from "effect";
 import { pbkdf2 } from "node:crypto";
 import { User } from "@org/domain/models/User";
-import { encodeBase32LowerCaseNoPadding } from "@oslojs/encoding";
+import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from "@oslojs/encoding";
+import { sha256 } from "@oslojs/crypto/sha2";
 
 export const ENTROPY_SIZE = 10;
 const ITERATIONS = 10000;
@@ -26,3 +27,6 @@ export const generateSessionToken = Effect.sync(() => {
   const bytes = new Uint8Array(20);
   return encodeBase32LowerCaseNoPadding(bytes);
 });
+
+export const getSessionId = (token: string) =>
+  encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
