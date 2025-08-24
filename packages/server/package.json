@@ -16,12 +16,14 @@
     "build-cjs": "babel build/esm --plugins @babel/transform-export-namespace-from --plugins @babel/transform-modules-commonjs --out-dir build/cjs --source-maps",
     "build-annotate": "babel build/esm --plugins annotate-pure-calls --out-dir build/esm --source-maps",
     "check": "tsc -b tsconfig.json",
-    "test": "vitest",
-    "coverage": "vitest --coverage",
+    "test": "vitest --exclude **/*.integ.test.ts",
+    "test:integ": "dotenv -e '../../.env' vitest integ",
+    "coverage": "vitest --coverage --exclude '**/*.integ.test.ts'",
     "db:start": "docker-compose up -d",
     "db:stop": "docker-compose down",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
-    "db:migrate": "tsx ./src/db/migrate.ts"
+    "db:migrate": "tsx ./src/db/migrate.ts",
+    "db:studio": "dotenv -e '../../.env' drizzle-kit studio"
   },
   "dependencies": {
     "@effect/platform": "latest",

@@ -15,7 +15,8 @@
     "lint-fix": "pnpm lint --fix",
     "format": "prettier --write \"**/*.{js,ts,mjs,jsx,tsx,json,md,css,html,yaml,yml,mdx}\"",
     "format:check": "prettier --check \"**/*.{js,ts,mjs,jsx,tsx,json,md,css,html,yaml,yml,mdx}\"",
-    "test": "vitest",
+    "test": "vitest --exclude **/*.integ.test.ts",
+    "test:integ": "pnpm --filter @org/server test:integ",
     "coverage": "vitest --coverage"
   },
   "devDependencies": {
@@ -53,6 +54,7 @@
     }
   },
   "dependencies": {
-    "@effect/platform": "^0.90.5"
+    "@effect/platform": "^0.90.5",
+    "dotenv-cli": "^10.0.0"
   }
 }

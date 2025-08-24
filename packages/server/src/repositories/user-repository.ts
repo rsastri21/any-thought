@@ -4,7 +4,7 @@ import { AuthUser, User, UserNotFoundError } from "@org/domain/models/User";
 import { DbSchema } from "../db/index.js";
 import { eq } from "drizzle-orm";
 
-const UserFromAuthUser = Schema.transformOrFail(AuthUser, User, {
+export const UserFromAuthUser = Schema.transformOrFail(AuthUser, User, {
   strict: true,
   decode: (authUser) => {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -60,7 +60,7 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       ),
     );
 
-    const findUserById = db.makeQuery((execute, input: typeof User.fields.id) =>
+    const findUserById = db.makeQuery((execute, input: string) =>
       execute((client) =>
         client.query.users.findFirst({
           columns: { password: false, salt: false },
@@ -79,10 +79,10 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       ),
     );
 
-    const findAuthUserById = db.makeQuery((execute, input: typeof AuthUser.fields.id) =>
+    const findAuthUserById = db.makeQuery((execute, input: string) =>
       execute((client) =>
         client.query.users.findFirst({
-          where: eq(DbSchema.users.id, input.toString()),
+          where: eq(DbSchema.users.id, input),
         }),
       ).pipe(
         Effect.flatMap(Option.fromNullable),
@@ -90,23 +90,36 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
         Effect.catchTags({
           DatabaseError: Effect.die,
           NoSuchElementException: () =>
-            new UserNotFoundError({ message: `User with ${input.toString()} not found.` }),
+            new UserNotFoundError({ message: `User with ${input} not found.` }),
           ParseError: Effect.die,
         }),
         Effect.withSpan("UserRepository.findAuthUserById"),
       ),
     );
 
-    const del = db.makeQuery((execute, input: typeof User.fields.id) =>
+    const findAll = db.makeQuery((execute) =>
       execute((client) =>
-        client.delete(DbSchema.users).where(eq(DbSchema.users.id, input.toString())).returning(),
+        client.query.users.findMany({ columns: { password: false, salt: false } }),
+      ).pipe(
+        Effect.flatMap(Schema.decode(Schema.Array(User))),
+        Effect.catchTags({
+          DatabaseError: Effect.die,
+          ParseError: Effect.die,
+        }),
+        Effect.withSpan("UserRepository.findAll"),
+      ),
+    );
+
+    const del = db.makeQuery((execute, input: string) =>
+      execute((client) =>
+        client.delete(DbSchema.users).where(eq(DbSchema.users.id, input)).returning(),
       ).pipe(
         Effect.flatMap(Array.head),
         Effect.flatMap(Schema.decode(Schema.Struct({ id: User.fields.id }))),
         Effect.catchTags({
           DatabaseError: Effect.die,
           NoSuchElementException: () =>
-            new UserNotFoundError({ message: `User with id ${input.toString()} not found.` }),
+            new UserNotFoundError({ message: `User with id ${input} not found.` }),
           ParseError: Effect.die,
         }),
         Effect.withSpan("UserRepository.del"),
@@ -118,6 +131,7 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       update,
       findUserById,
       findAuthUserById,
+      findAll,
       del,
     } as const;
   }),
