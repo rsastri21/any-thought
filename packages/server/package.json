@@ -22,7 +22,7 @@
     "db:start": "docker-compose up -d",
     "db:stop": "docker-compose down",
     "db:generate": "drizzle-kit generate --config=drizzle.config.ts",
-    "db:migrate": "tsx ./src/db/migrate.ts",
+    "db:migrate": "dotenv -e '../../.env' tsx ./src/db/migrate.ts",
     "db:studio": "dotenv -e '../../.env' drizzle-kit studio"
   },
   "dependencies": {
