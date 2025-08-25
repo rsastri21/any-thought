@@ -15,6 +15,17 @@ const testAuthUser = Schema.decodeUnknownSync(AuthUser)({
   salt: "test-salt",
 });
 
+const testAuthUser2 = Schema.decodeUnknownSync(AuthUser)({
+  id: generateIdFromEntropySize(10),
+  username: `test-user-${Math.floor(Math.random() * 1000)}`,
+  name: "test-user",
+  email: "testemail@email.com",
+  image: "https://api.dicebear.com/9.x/notionists/svg?seed=Felix",
+  createdAt: new Date(),
+  password: "test-password",
+  salt: "test-salt",
+});
+
 const testUser = Schema.decodeSync(UserFromAuthUser)(Schema.encodeSync(AuthUser)(testAuthUser));
 
 describe("UserRepository Integration Tests", () => {
@@ -34,8 +45,9 @@ describe("UserRepository Integration Tests", () => {
       "should edit a user",
       Effect.fnUntraced(function* () {
         const userRepo = yield* UserRepository;
+        const user = yield* userRepo.create(testAuthUser2);
         const editUserResult = {
-          ...Schema.encodeSync(User)(testUser),
+          ...Schema.encodeSync(User)(user),
           name: "updated-name",
         };
         const editedUser = yield* userRepo.update(Schema.decodeSync(User)(editUserResult));

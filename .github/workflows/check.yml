@@ -79,8 +79,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install dependencies
         uses: ./.github/actions/setup
-      - name: Workspace dependencies
-        run: pnpm recursive install
       - run: pnpm test:integ
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb
