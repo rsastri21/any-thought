@@ -80,6 +80,10 @@ jobs:
       - name: Install dependencies
         uses: ./.github/actions/setup
       - run: pnpm --filter @org/server db:migrate
+        env:
+            DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb
+            NODE_OPTIONS: --max_old_space_size=8192
+            NODE_ENV: development
       - run: pnpm test:integ
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/testdb
