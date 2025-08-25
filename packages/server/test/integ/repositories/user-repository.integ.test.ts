@@ -26,6 +26,17 @@ const testAuthUser2 = Schema.decodeUnknownSync(AuthUser)({
   salt: "test-salt",
 });
 
+const testAuthUser3 = Schema.decodeUnknownSync(AuthUser)({
+  id: generateIdFromEntropySize(10),
+  username: `test-user-${Math.floor(Math.random() * 1000)}`,
+  name: "test-user",
+  email: "testemail@email.com",
+  image: "https://api.dicebear.com/9.x/notionists/svg?seed=Felix",
+  createdAt: new Date(),
+  password: "test-password",
+  salt: "test-salt",
+});
+
 const testUser = Schema.decodeSync(UserFromAuthUser)(Schema.encodeSync(AuthUser)(testAuthUser));
 
 describe("UserRepository Integration Tests", () => {
@@ -60,10 +71,11 @@ describe("UserRepository Integration Tests", () => {
       "should find a user by ID",
       Effect.fnUntraced(function* () {
         const userRepo = yield* UserRepository;
-        const user = yield* userRepo.findUserById(testUser.id);
+        const createdUser = yield* userRepo.create(testAuthUser3);
+        const user = yield* userRepo.findUserById(createdUser.id);
 
         expect(user).toBeDefined();
-        expect(user.id).toEqual(testUser.id);
+        expect(user.id).toEqual(createdUser.id);
       }),
     );
 
