@@ -60,11 +60,11 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       ),
     );
 
-    const findUserById = db.makeQuery((execute, input: string) =>
+    const findUserById = db.makeQuery((execute, input: typeof User.fields.id.Type) =>
       execute((client) =>
         client.query.users.findFirst({
           columns: { password: false, salt: false },
-          where: eq(DbSchema.users.id, input.toString()),
+          where: eq(DbSchema.users.id, input),
         }),
       ).pipe(
         Effect.flatMap(Option.fromNullable),
@@ -72,14 +72,14 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
         Effect.catchTags({
           DatabaseError: Effect.die,
           NoSuchElementException: () =>
-            new UserNotFoundError({ message: `User with ${input.toString()} not found.` }),
+            new UserNotFoundError({ message: `User with ${input} not found.` }),
           ParseError: Effect.die,
         }),
         Effect.withSpan("UserRepository.findUserById"),
       ),
     );
 
-    const findAuthUserById = db.makeQuery((execute, input: string) =>
+    const findAuthUserById = db.makeQuery((execute, input: typeof User.fields.id.Type) =>
       execute((client) =>
         client.query.users.findFirst({
           where: eq(DbSchema.users.id, input),
@@ -110,7 +110,7 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       ),
     );
 
-    const del = db.makeQuery((execute, input: string) =>
+    const del = db.makeQuery((execute, input: typeof User.fields.id.Type) =>
       execute((client) =>
         client.delete(DbSchema.users).where(eq(DbSchema.users.id, input)).returning(),
       ).pipe(

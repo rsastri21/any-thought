@@ -10,7 +10,7 @@ export class UserNotFoundError extends Schema.TaggedError<UserNotFoundError>("Us
 ) {}
 
 export class User extends Schema.Class<User>("User")({
-  id: Schema.String,
+  id: Schema.NonEmptyString.pipe(Schema.brand("UserId")),
   username: Schema.NonEmptyString,
   name: Schema.NonEmptyString,
   email: Schema.optionalWith(

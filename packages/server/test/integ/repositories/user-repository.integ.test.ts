@@ -43,7 +43,7 @@ describe("UserRepository Integration Tests", () => {
   it.layer(UserRepository.Default, { timeout: "30 seconds" })("UserRepository", (it) => {
     it.effect(
       "should create a user",
-      Effect.fnUntraced(function* () {
+      Effect.fnUntraced(function*() {
         const userRepo = yield* UserRepository;
         const newUser = yield* userRepo.create(testAuthUser);
 
@@ -54,7 +54,7 @@ describe("UserRepository Integration Tests", () => {
 
     it.effect(
       "should edit a user",
-      Effect.fnUntraced(function* () {
+      Effect.fnUntraced(function*() {
         const userRepo = yield* UserRepository;
         const user = yield* userRepo.create(testAuthUser2);
         const editUserResult = {
@@ -69,7 +69,7 @@ describe("UserRepository Integration Tests", () => {
 
     it.effect(
       "should find a user by ID",
-      Effect.fnUntraced(function* () {
+      Effect.fnUntraced(function*() {
         const userRepo = yield* UserRepository;
         const createdUser = yield* userRepo.create(testAuthUser3);
         const user = yield* userRepo.findUserById(createdUser.id);
@@ -81,7 +81,7 @@ describe("UserRepository Integration Tests", () => {
 
     it.effect(
       "should delete a user",
-      Effect.fnUntraced(function* () {
+      Effect.fnUntraced(function*() {
         const userRepo = yield* UserRepository;
         yield* userRepo.del(testUser.id);
 
