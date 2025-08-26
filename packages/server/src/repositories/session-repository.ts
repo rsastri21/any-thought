@@ -1,15 +1,11 @@
-import { Array, Data, Effect, Option, Schema } from "effect";
+import { Array, Effect, Option, Schema } from "effect";
 import { DatabaseService } from "../db/database.js";
-import { Session } from "@org/domain/models/Session";
+import { Session, SessionNotFoundError } from "@org/domain/models/Session";
 import { DbSchema } from "../db/index.js";
 import { eq } from "drizzle-orm";
 import { getSessionId } from "../utils/auth.js";
 
 const SESSION_EXPIRY_TIME = 1000 * 60 * 60 * 24 * 30; // 30 days
-
-export class SessionNotFoundError extends Data.TaggedError("SessionNotFoundError")<{
-  readonly message: string;
-}> {}
 
 export class SessionRepository extends Effect.Service<SessionRepository>()("SessionRepository", {
   dependencies: [DatabaseService.Default],
@@ -17,12 +13,12 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
     const db = yield* DatabaseService;
 
     const create = db.makeQuery(
-      (execute, input: { token: string; userId: typeof Session.fields.userId }) => {
+      (execute, input: { token: string; userId: typeof Session.fields.userId.Type }) => {
         const sessionId = getSessionId(input.token);
 
         const session = {
           id: sessionId,
-          userId: input.userId.toString(),
+          userId: input.userId,
           expiresAt: new Date(Date.now() + SESSION_EXPIRY_TIME),
         };
 

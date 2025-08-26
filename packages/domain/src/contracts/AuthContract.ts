@@ -1,12 +1,18 @@
 import { Schema } from "effect";
-import { User } from "../models/User.js";
+import { User, UserNotFoundError } from "../models/User.js";
+import { HttpApiEndpoint, HttpApiGroup } from "@effect/platform";
+import { SessionNotFoundError } from "../models/Session.js";
+import { Unauthorized } from "@effect/platform/HttpApiError";
 
 const Password = Schema.Trim.pipe(Schema.minLength(8));
+const Authorization = Schema.Struct({
+  x_at_auth_token: Schema.String,
+});
 
 export class SignUpPayload extends Schema.Class<SignUpPayload>("SignUpPayload")(
   Schema.Struct({
-    username: User.fields.username,
-    name: User.fields.name,
+    username: User.fields.username.annotations({ message: () => "Username is required." }),
+    name: User.fields.name.annotations({ message: () => "Name is required." }),
     email: User.fields.email,
     password: Password,
     confirmPassword: Password,
@@ -27,6 +33,19 @@ export class LoginPayload extends Schema.Class<LoginPayload>("LoginPayload")({
   password: Schema.NonEmptyString,
 }) {}
 
-export class SignOutPayload extends Schema.Class<SignOutPayload>("SignOutPayload")({
-  sessionId: Schema.NonEmptyString,
-}) {}
+export class AuthGroup extends HttpApiGroup.make("auth")
+  .add(HttpApiEndpoint.post("signup", "/signup").addSuccess(User).setPayload(SignUpPayload))
+  .add(
+    HttpApiEndpoint.post("login", "/login")
+      .addSuccess(Schema.Void)
+      .addError(UserNotFoundError)
+      .addError(Unauthorized, { status: 403 })
+      .setPayload(LoginPayload),
+  )
+  .add(
+    HttpApiEndpoint.post("signout", "/signout")
+      .setHeaders(Authorization)
+      .addSuccess(Schema.Void)
+      .addError(SessionNotFoundError),
+  )
+  .prefix("/auth") {}
