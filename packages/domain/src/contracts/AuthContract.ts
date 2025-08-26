@@ -26,12 +26,12 @@ export class SignUpPayload extends Schema.Class<SignUpPayload>("SignUpPayload")(
       }
     }),
   ),
-) { }
+) {}
 
 export class LoginPayload extends Schema.Class<LoginPayload>("LoginPayload")({
   username: User.fields.username,
   password: Schema.NonEmptyString,
-}) { }
+}) {}
 
 export class AuthGroup extends HttpApiGroup.make("auth")
   .add(
@@ -53,4 +53,4 @@ export class AuthGroup extends HttpApiGroup.make("auth")
       .addSuccess(Schema.Void)
       .addError(SessionNotFoundError),
   )
-  .prefix("/auth") { }
+  .prefix("/auth") {}

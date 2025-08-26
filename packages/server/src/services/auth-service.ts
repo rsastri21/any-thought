@@ -17,7 +17,7 @@ import {
 
 const AuthUserFromSignUpPayload = Schema.transformOrFail(SignUpPayload, AuthUser, {
   strict: true,
-  decode: Effect.fnUntraced(function*(signUpPayload) {
+  decode: Effect.fnUntraced(function* (signUpPayload) {
     const salt = randomBytes(128).toString();
     const password = yield* hashPassword(signUpPayload.password, salt);
     return yield* ParseResult.succeed({
@@ -39,16 +39,16 @@ const AuthUserFromSignUpPayload = Schema.transformOrFail(SignUpPayload, AuthUser
 
 export class AuthService extends Effect.Service<AuthService>()("AuthService", {
   dependencies: [UserRepository.Default, SessionRepository.Default],
-  effect: Effect.gen(function*() {
+  effect: Effect.gen(function* () {
     const userRepo = yield* UserRepository;
     const sessionRepo = yield* SessionRepository;
 
-    const signup = Effect.fn("AuthService.signup")(function*(input: typeof SignUpPayload.Type) {
+    const signup = Effect.fn("AuthService.signup")(function* (input: typeof SignUpPayload.Type) {
       const authUser = Schema.decodeSync(AuthUserFromSignUpPayload)(input);
       return yield* userRepo.create(authUser);
     });
 
-    const login = Effect.fn("AuthService.login")(function*(input: typeof LoginPayload.Type) {
+    const login = Effect.fn("AuthService.login")(function* (input: typeof LoginPayload.Type) {
       const user = yield* userRepo.findAuthUserByUsername(input.username);
       const hashedPassword = yield* hashPassword(input.password, user.salt);
       if (hashedPassword !== user.password) {
@@ -58,13 +58,13 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
       return yield* sessionRepo.create({ token, userId: user.id });
     });
 
-    const signout = Effect.fn("AuthService.signout")(function*(
+    const signout = Effect.fn("AuthService.signout")(function* (
       sessionId: typeof Session.fields.id.Type,
     ) {
       return yield* sessionRepo.del(sessionId);
     });
 
-    const validateRequest = Effect.fn("AuthService.validateRequest")(function*(token: string) {
+    const validateRequest = Effect.fn("AuthService.validateRequest")(function* (token: string) {
       const sessionId = getSessionId(token);
       const session = yield* sessionRepo.get(sessionId);
       const isExpired = yield* DateTime.isPast(session.expiresAt);
@@ -94,4 +94,4 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
       validateRequest,
     } as const;
   }),
-}) { }
+}) {}

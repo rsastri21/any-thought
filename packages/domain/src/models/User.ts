@@ -7,7 +7,7 @@ export class UserNotFoundError extends Schema.TaggedError<UserNotFoundError>("Us
     message: Schema.String,
   },
   HttpApiSchema.annotations({ status: 404 }),
-) { }
+) {}
 
 export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExistsError>(
   "UserAlreadyExistsError",
@@ -17,7 +17,7 @@ export class UserAlreadyExistsError extends Schema.TaggedError<UserAlreadyExists
     message: Schema.String,
   },
   HttpApiSchema.annotations({ status: 400 }),
-) { }
+) {}
 
 export class User extends Schema.Class<User>("User")({
   id: Schema.NonEmptyString.pipe(Schema.brand("UserId")),
@@ -29,9 +29,9 @@ export class User extends Schema.Class<User>("User")({
   ),
   image: Schema.String,
   createdAt: Schema.DateTimeUtcFromDate,
-}) { }
+}) {}
 
 export class AuthUser extends User.extend<AuthUser>("AuthUser")({
   password: Schema.NonEmptyString,
   salt: Schema.NonEmptyString,
-}) { }
+}) {}

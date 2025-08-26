@@ -22,7 +22,7 @@ export const UserFromAuthUser = Schema.transformOrFail(AuthUser, User, {
 
 export class UserRepository extends Effect.Service<UserRepository>()("UserRepository", {
   dependencies: [DatabaseService.Default],
-  effect: Effect.gen(function*() {
+  effect: Effect.gen(function* () {
     const db = yield* DatabaseService;
 
     const create = db.makeQuery((execute, input: typeof AuthUser.Type) =>
@@ -157,4 +157,4 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       del,
     } as const;
   }),
-}) { }
+}) {}
