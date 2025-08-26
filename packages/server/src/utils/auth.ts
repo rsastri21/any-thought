@@ -23,10 +23,10 @@ export const generateIdFromEntropySize = (size: number) => {
   return Schema.decodeUnknownSync(User.fields.id)(encodeBase32LowerCaseNoPadding(buffer));
 };
 
-export const generateSessionToken = Effect.sync(() => {
+export const generateSessionToken = () => {
   const bytes = new Uint8Array(20);
   return encodeBase32LowerCaseNoPadding(bytes);
-});
+};
 
 export const getSessionId = (token: string) =>
   encodeHexLowerCase(sha256(new TextEncoder().encode(token)));

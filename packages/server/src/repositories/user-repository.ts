@@ -1,6 +1,6 @@
 import { Array, DateTime, Effect, Option, ParseResult, Schema } from "effect";
 import { DatabaseService } from "../db/database.js";
-import { AuthUser, User, UserNotFoundError } from "@org/domain/models/User";
+import { AuthUser, User, UserAlreadyExistsError, UserNotFoundError } from "@org/domain/models/User";
 import { DbSchema } from "../db/index.js";
 import { eq } from "drizzle-orm";
 
@@ -22,7 +22,7 @@ export const UserFromAuthUser = Schema.transformOrFail(AuthUser, User, {
 
 export class UserRepository extends Effect.Service<UserRepository>()("UserRepository", {
   dependencies: [DatabaseService.Default],
-  effect: Effect.gen(function* () {
+  effect: Effect.gen(function*() {
     const db = yield* DatabaseService;
 
     const create = db.makeQuery((execute, input: typeof AuthUser.Type) =>
@@ -32,7 +32,10 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
         Effect.flatMap(Array.head),
         Effect.flatMap(Schema.decode(UserFromAuthUser)),
         Effect.catchTags({
-          DatabaseError: Effect.die,
+          DatabaseError: (error) =>
+            error.type === "unique_violation"
+              ? Effect.fail(new UserAlreadyExistsError({ message: "User already exists." }))
+              : Effect.die(error),
           NoSuchElementException: () => Effect.die(""),
           ParseError: Effect.die,
         }),
@@ -97,6 +100,24 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       ),
     );
 
+    const findAuthUserByUsername = db.makeQuery(
+      (execute, input: typeof User.fields.username.Type) =>
+        execute((client) =>
+          client.query.users.findFirst({
+            where: eq(DbSchema.users.username, input),
+          }),
+        ).pipe(
+          Effect.flatMap(Option.fromNullable),
+          Effect.flatMap(Schema.decode(AuthUser)),
+          Effect.catchTags({
+            DatabaseError: Effect.die,
+            NoSuchElementException: () =>
+              new UserNotFoundError({ message: `User with username ${input} not found.` }),
+            ParseError: Effect.die,
+          }),
+          Effect.withSpan("UserRepository.findAuthUserByUsername"),
+        ),
+    );
     const findAll = db.makeQuery((execute) =>
       execute((client) =>
         client.query.users.findMany({ columns: { password: false, salt: false } }),
@@ -131,8 +152,9 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       update,
       findUserById,
       findAuthUserById,
+      findAuthUserByUsername,
       findAll,
       del,
     } as const;
   }),
-}) {}
+}) { }

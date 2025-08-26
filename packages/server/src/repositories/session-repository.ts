@@ -9,7 +9,7 @@ const SESSION_EXPIRY_TIME = 1000 * 60 * 60 * 24 * 30; // 30 days
 
 export class SessionRepository extends Effect.Service<SessionRepository>()("SessionRepository", {
   dependencies: [DatabaseService.Default],
-  effect: Effect.gen(function* () {
+  effect: Effect.gen(function*() {
     const db = yield* DatabaseService;
 
     const create = db.makeQuery(
@@ -37,8 +37,7 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
       },
     );
 
-    const refresh = Effect.fn("SessionRepository.refresh")(function* (token: string) {
-      const sessionId = getSessionId(token);
+    const refresh = Effect.fn("SessionRepository.refresh")(function*(sessionId: string) {
       return yield* db
         .execute((client) =>
           client
@@ -53,7 +52,7 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
           Effect.catchTags({
             DatabaseError: Effect.die,
             NoSuchElementException: () =>
-              new SessionNotFoundError({ message: `No session for token: ${token}.` }),
+              new SessionNotFoundError({ message: `No session for sessionId: ${sessionId}.` }),
             ParseError: Effect.die,
           }),
         );
@@ -100,4 +99,4 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
       del,
     } as const;
   }),
-}) {}
+}) { }
