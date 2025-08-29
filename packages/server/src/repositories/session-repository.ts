@@ -37,7 +37,7 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
         const exists = yield* redis.use((client) =>
           client.hExists(`session:${sessionId}`, "expiresAt"),
         );
-        if (exists === 1) {
+        if (exists === 0) {
           return yield* Effect.fail(
             new SessionNotFoundError({ message: `No session found with id: ${sessionId}.` }),
           );
