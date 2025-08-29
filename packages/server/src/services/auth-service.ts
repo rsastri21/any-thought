@@ -1,7 +1,6 @@
 import { Forbidden } from "@effect/platform/HttpApiError";
 import type { LoginPayload } from "@org/domain/contracts/AuthContract";
 import { SignUpPayload } from "@org/domain/contracts/AuthContract";
-import type { Session } from "@org/domain/models/Session";
 import { AuthUser } from "@org/domain/models/User";
 import { randomBytes } from "crypto";
 import { DateTime, Effect, ParseResult, Schema } from "effect";
@@ -55,13 +54,14 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
         return yield* Effect.fail(Forbidden);
       }
       const token = generateSessionToken();
-      return yield* sessionRepo.create({ token, userId: user.id });
+      yield* sessionRepo.create(token, user.id);
+      return token;
     });
 
-    const signout = Effect.fn("AuthService.signout")(function* (
-      sessionId: typeof Session.fields.id.Type,
-    ) {
-      return yield* sessionRepo.del(sessionId);
+    const signout = Effect.fn("AuthService.signout")(function* (token: string) {
+      const sessionId = getSessionId(token);
+      const session = yield* sessionRepo.get(sessionId);
+      return yield* sessionRepo.del(session.userId, session.id);
     });
 
     const validateRequest = Effect.fn("AuthService.validateRequest")(function* (token: string) {
@@ -70,7 +70,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
       const isExpired = yield* DateTime.isPast(session.expiresAt);
 
       if (isExpired) {
-        yield* sessionRepo.del(sessionId);
+        yield* sessionRepo.del(session.userId, session.id);
         return yield* Effect.fail(Forbidden);
       }
 
@@ -84,7 +84,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
         yield* sessionRepo.refresh(sessionId);
       }
 
-      return yield* userRepo.findUserById(session.userId);
+      return session.userId;
     });
 
     return {

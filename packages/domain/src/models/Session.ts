@@ -14,5 +14,5 @@ export class SessionNotFoundError extends Schema.TaggedError<SessionNotFoundErro
 export class Session extends Schema.Class<Session>("Session")({
   id: Schema.NonEmptyString.pipe(Schema.brand("SessionId")),
   userId: Schema.NonEmptyString.pipe(Schema.brand("UserId")),
-  expiresAt: Schema.DateTimeUtcFromDate,
+  expiresAt: Schema.DateTimeUtc,
 }) {}

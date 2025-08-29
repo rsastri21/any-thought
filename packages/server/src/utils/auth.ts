@@ -3,6 +3,7 @@ import { pbkdf2 } from "node:crypto";
 import { User } from "@org/domain/models/User";
 import { encodeBase32LowerCaseNoPadding, encodeHexLowerCase } from "@oslojs/encoding";
 import { sha256 } from "@oslojs/crypto/sha2";
+import { Session } from "@org/domain/models/Session";
 
 export const ENTROPY_SIZE = 10;
 const ITERATIONS = 10000;
@@ -29,4 +30,6 @@ export const generateSessionToken = () => {
 };
 
 export const getSessionId = (token: string) =>
-  encodeHexLowerCase(sha256(new TextEncoder().encode(token)));
+  Schema.decodeUnknownSync(Session.fields.id)(
+    encodeHexLowerCase(sha256(new TextEncoder().encode(token))),
+  );

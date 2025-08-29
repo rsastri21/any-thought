@@ -1,8 +1,8 @@
+import { AuthUser, User, UserAlreadyExistsError, UserNotFoundError } from "@org/domain/models/User";
+import { eq } from "drizzle-orm";
 import { Array, DateTime, Effect, Option, ParseResult, Schema } from "effect";
 import { DatabaseService } from "../db/database.js";
-import { AuthUser, User, UserAlreadyExistsError, UserNotFoundError } from "@org/domain/models/User";
 import { DbSchema } from "../db/index.js";
-import { eq } from "drizzle-orm";
 
 export const UserFromAuthUser = Schema.transformOrFail(AuthUser, User, {
   strict: true,

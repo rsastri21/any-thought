@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@effect/vitest";
 import { AuthUser, User } from "@org/domain/models/User";
-import { UserFromAuthUser, UserRepository } from "../../../src/repositories/user-repository.js";
-import { generateIdFromEntropySize } from "../../../src/utils/auth.js";
+import { UserFromAuthUser, UserRepository } from "../../src/repositories/user-repository.js";
+import { generateIdFromEntropySize } from "../../src/utils/auth.js";
 import { Effect, Schema } from "effect";
 
 const testAuthUser = Schema.decodeUnknownSync(AuthUser)({
