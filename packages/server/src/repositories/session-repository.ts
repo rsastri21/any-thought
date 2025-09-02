@@ -23,8 +23,8 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
         yield* redis.use((client) =>
           client
             .multi()
-            .hSet(`session:${session.id}`, Schema.encodeUnknownSync(Session)(session))
-            .sAdd(`user:${userId}:sessions`, sessionId)
+            .hSet(`session:${session.id}`, Schema.encodeSync(Session)(session))
+            .sAdd(`user:${userId}:sessions`, [sessionId])
             .exec(),
         );
         return session;

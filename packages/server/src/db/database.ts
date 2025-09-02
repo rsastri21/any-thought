@@ -33,7 +33,7 @@ export class TransactionContext extends Context.Tag("TransactionContext")<
 
 export class DatabaseError extends Data.TaggedError("DatabaseError")<{
   readonly type: "unique_violation" | "foreign_key_violation" | "connection_error";
-  readonly cause: pg.DatabaseError;
+  readonly cause: any;
 }> {
   public override toString() {
     return `DatabaseError: ${this.cause.message}`;
@@ -50,8 +50,15 @@ export class DatabaseConnectionLostError extends Data.TaggedError("DatabaseConne
 }> {}
 
 const matchPgError = (error: unknown) => {
-  if (error instanceof pg.DatabaseError) {
-    switch (error.code) {
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "cause" in error &&
+    typeof error.cause === "object" &&
+    error.cause !== null &&
+    "code" in error.cause
+  ) {
+    switch (error.cause.code) {
       case "23505":
         return new DatabaseError({ type: "unique_violation", cause: error });
       case "23503":
@@ -64,6 +71,7 @@ const matchPgError = (error: unknown) => {
 };
 
 export class DatabaseService extends Effect.Service<DatabaseService>()("DatabaseService", {
+  accessors: true,
   dependencies: [],
   scoped: Effect.gen(function* () {
     const databaseUrl = yield* Config.redacted("DATABASE_URL");

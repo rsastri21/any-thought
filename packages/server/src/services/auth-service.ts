@@ -1,4 +1,4 @@
-import { Forbidden } from "@effect/platform/HttpApiError";
+import { Unauthorized, Forbidden } from "@effect/platform/HttpApiError";
 import type { LoginPayload } from "@org/domain/contracts/AuthContract";
 import { SignUpPayload } from "@org/domain/contracts/AuthContract";
 import { AuthUser } from "@org/domain/models/User";
@@ -42,16 +42,19 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
     const userRepo = yield* UserRepository;
     const sessionRepo = yield* SessionRepository;
 
-    const signup = Effect.fn("AuthService.signup")(function* (input: typeof SignUpPayload.Type) {
-      const authUser = Schema.decodeSync(AuthUserFromSignUpPayload)(input);
-      return yield* userRepo.create(authUser);
-    });
+    const signup = Effect.fn("AuthService.signup")(
+      function* (input: typeof SignUpPayload.Type) {
+        const authUser = yield* Schema.decode(AuthUserFromSignUpPayload)(input);
+        return yield* userRepo.create(authUser);
+      },
+      (effect) => Effect.catchTag(effect, "ParseError", Effect.die),
+    );
 
     const login = Effect.fn("AuthService.login")(function* (input: typeof LoginPayload.Type) {
       const user = yield* userRepo.findAuthUserByUsername(input.username);
       const hashedPassword = yield* hashPassword(input.password, user.salt);
       if (hashedPassword !== user.password) {
-        return yield* Effect.fail(Forbidden);
+        return yield* Effect.fail(new Forbidden());
       }
       const token = generateSessionToken();
       yield* sessionRepo.create(token, user.id);
@@ -59,8 +62,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
     });
 
     const signout = Effect.fn("AuthService.signout")(function* (token: string) {
-      const sessionId = getSessionId(token);
-      const session = yield* sessionRepo.get(sessionId);
+      const session = yield* sessionRepo.get(token);
       return yield* sessionRepo.del(session.userId, session.id);
     });
 
@@ -71,7 +73,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 
       if (isExpired) {
         yield* sessionRepo.del(session.userId, session.id);
-        return yield* Effect.fail(Forbidden);
+        return yield* Effect.fail(new Unauthorized());
       }
 
       const now = yield* DateTime.now;

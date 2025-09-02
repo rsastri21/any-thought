@@ -26,6 +26,7 @@ export const generateIdFromEntropySize = (size: number) => {
 
 export const generateSessionToken = () => {
   const bytes = new Uint8Array(20);
+  crypto.getRandomValues(bytes);
   return encodeBase32LowerCaseNoPadding(bytes);
 };
 
