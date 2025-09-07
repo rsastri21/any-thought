@@ -20,7 +20,7 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
           userId,
           expiresAt,
         });
-        yield* redis.use((client) =>
+        yield* redis.execute((client) =>
           client
             .multi()
             .hSet(`session:${session.id}`, Schema.encodeSync(Session)(session))
@@ -34,7 +34,7 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
 
     const refresh = Effect.fn("SessionRepository.refresh")(
       function* (sessionId: typeof Session.fields.id.Type) {
-        const exists = yield* redis.use((client) =>
+        const exists = yield* redis.execute((client) =>
           client.hExists(`session:${sessionId}`, "expiresAt"),
         );
         if (exists === 0) {
@@ -44,7 +44,9 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
         }
         const now = yield* DateTime.now;
         const expiresAt = DateTime.formatIso(DateTime.add(now, { days: SESSION_EXPIRY_TIME }));
-        yield* redis.use((client) => client.hSet(`session:${sessionId}`, "expiresAt", expiresAt));
+        yield* redis.execute((client) =>
+          client.hSet(`session:${sessionId}`, "expiresAt", expiresAt),
+        );
         return yield* Effect.void;
       },
       (effect) => Effect.catchTag(effect, "RedisError", Effect.die),
@@ -53,7 +55,7 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
     const get = Effect.fn("SessionRepository.get")(
       function* (token: string) {
         const sessionId = getSessionId(token);
-        return yield* redis.use((client) => client.hGetAll(`session:${sessionId}`));
+        return yield* redis.execute((client) => client.hGetAll(`session:${sessionId}`));
       },
       (effect, token) =>
         pipe(
@@ -70,7 +72,7 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
     const del = Effect.fn("SessionRepository.del")(
       function* (userId: typeof Session.fields.userId.Type, token: string) {
         const sessionId = getSessionId(token);
-        yield* redis.use((client) =>
+        yield* redis.execute((client) =>
           client
             .multi()
             .sRem(`user:${userId}:sessions`, `session:${sessionId}`)
@@ -84,8 +86,8 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
     const delAll = Effect.fn("SessionRepository.delAll")(
       function* (userId: typeof Session.fields.userId.Type) {
         const userKey = `user:${userId}:sessions`;
-        const sessions = yield* redis.use((client) => client.sMembers(userKey));
-        yield* redis.use((client) => client.del([...sessions, userKey]));
+        const sessions = yield* redis.execute((client) => client.sMembers(userKey));
+        yield* redis.execute((client) => client.del([...sessions, userKey]));
       },
       (effect) => Effect.catchTag(effect, "RedisError", Effect.die),
     );

@@ -6,6 +6,7 @@ import { createServer } from "node:http";
 import { AuthLive } from "./api/auth-live.js";
 import { DatabaseService } from "./db/database.js";
 import { AuthService } from "./services/auth-service.js";
+import { RedisService } from "./redis/redis.js";
 
 const HealthLive = HttpApiBuilder.group(DomainApi, "health", (handlers) =>
   handlers.handle("health", () => Effect.succeed("OK")),
@@ -24,16 +25,19 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   HttpServer.withLogAddress,
   Layer.provide(CorsLive),
   Layer.provide(ApiLive),
+  Layer.merge(Layer.effectDiscard(RedisService.use((redis) => redis.setupConnectionListeners))),
   Layer.merge(Layer.effectDiscard(DatabaseService.use((db) => db.setupConnectionListeners))),
   Layer.provide(AuthService.Default),
   Layer.provide(DatabaseService.Default),
+  Layer.provide(RedisService.Default),
   Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
 );
 
 Layer.launch(HttpLive).pipe(
   Effect.tapErrorCause(Effect.logError),
   Effect.retry({
-    while: (error) => error._tag === "DatabaseConnectionLostError",
+    while: (error) =>
+      error._tag === "DatabaseConnectionLostError" || error._tag === "RedisConnectionLostError",
     schedule: Schedule.exponential("1 second", 2).pipe(
       Schedule.modifyDelay(Duration.min("8 seconds")),
       Schedule.jittered,
