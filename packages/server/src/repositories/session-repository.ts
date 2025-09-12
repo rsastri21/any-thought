@@ -24,7 +24,7 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
           client
             .multi()
             .hSet(`session:${session.id}`, Schema.encodeSync(Session)(session))
-            .sAdd(`user:${userId}:sessions`, [sessionId])
+            .sAdd(`user:${userId}:sessions`, [`session:${sessionId}`])
             .exec(),
         );
         return session;
