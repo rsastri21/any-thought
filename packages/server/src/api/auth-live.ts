@@ -1,12 +1,8 @@
-import { HttpApiBuilder, HttpApiSecurity } from "@effect/platform";
+import { HttpApiBuilder } from "@effect/platform";
 import { DomainApi } from "@org/domain/domain-api";
+import { security } from "@org/domain/middlewares/AuthMiddleware";
 import { Effect, Redacted } from "effect";
 import { AuthService } from "../services/auth-service.js";
-
-const security = HttpApiSecurity.apiKey({
-  in: "cookie",
-  key: "x_at_auth_token",
-});
 
 export const AuthLive = HttpApiBuilder.group(
   DomainApi,

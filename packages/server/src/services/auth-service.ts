@@ -1,7 +1,7 @@
 import { Unauthorized, Forbidden } from "@effect/platform/HttpApiError";
 import type { LoginPayload } from "@org/domain/contracts/AuthContract";
 import { SignUpPayload } from "@org/domain/contracts/AuthContract";
-import { AuthUser } from "@org/domain/models/User";
+import { AuthUser, UserId } from "@org/domain/models/User";
 import { randomBytes } from "crypto";
 import { DateTime, Effect, ParseResult, Schema } from "effect";
 import { SessionRepository } from "../repositories/session-repository.js";
@@ -66,28 +66,32 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
       return yield* sessionRepo.del(session.userId, session.id);
     });
 
-    const validateRequest = Effect.fn("AuthService.validateRequest")(function* (token: string) {
-      const sessionId = getSessionId(token);
-      const session = yield* sessionRepo.get(sessionId);
-      const isExpired = yield* DateTime.isPast(session.expiresAt);
+    const validateRequest = Effect.fn("AuthService.validateRequest")(
+      function* (token: string) {
+        const sessionId = getSessionId(token);
+        const session = yield* sessionRepo.get(sessionId);
+        const isExpired = yield* DateTime.isPast(session.expiresAt);
 
-      if (isExpired) {
-        yield* sessionRepo.del(session.userId, session.id);
-        return yield* Effect.fail(new Unauthorized());
-      }
+        if (isExpired) {
+          yield* sessionRepo.del(session.userId, session.id);
+          return yield* Effect.fail(new Unauthorized());
+        }
 
-      const now = yield* DateTime.now;
-      const isRefreshable = DateTime.between({
-        minimum: now,
-        maximum: DateTime.add(now, { days: 15 }),
-      })(session.expiresAt);
+        const now = yield* DateTime.now;
+        const isRefreshable = DateTime.between({
+          minimum: now,
+          maximum: DateTime.add(now, { days: 15 }),
+        })(session.expiresAt);
 
-      if (isRefreshable) {
-        yield* sessionRepo.refresh(sessionId);
-      }
+        if (isRefreshable) {
+          yield* sessionRepo.refresh(sessionId);
+        }
 
-      return session.userId;
-    });
+        return UserId.make({ id: session.userId });
+      },
+      (effect) =>
+        Effect.catchTag(effect, "SessionNotFoundError", () => Effect.fail(new Unauthorized())),
+    );
 
     return {
       signup,

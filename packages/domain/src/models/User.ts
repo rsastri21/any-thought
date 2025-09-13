@@ -35,3 +35,7 @@ export class AuthUser extends User.extend<AuthUser>("AuthUser")({
   password: Schema.NonEmptyString,
   salt: Schema.NonEmptyString,
 }) {}
+
+export class UserId extends Schema.Class<UserId>("UserId")({
+  id: User.fields.id,
+}) {}
