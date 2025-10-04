@@ -10,7 +10,6 @@ import {
   ENTROPY_SIZE,
   generateIdFromEntropySize,
   generateSessionToken,
-  getSessionId,
   hashPassword,
 } from "../utils/auth.js";
 
@@ -68,8 +67,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 
     const validateRequest = Effect.fn("AuthService.validateRequest")(
       function* (token: string) {
-        const sessionId = getSessionId(token);
-        const session = yield* sessionRepo.get(sessionId);
+        const session = yield* sessionRepo.get(token);
         const isExpired = yield* DateTime.isPast(session.expiresAt);
 
         if (isExpired) {
@@ -84,10 +82,10 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
         })(session.expiresAt);
 
         if (isRefreshable) {
-          yield* sessionRepo.refresh(sessionId);
+          yield* sessionRepo.refresh(token);
         }
 
-        return UserId.make({ id: session.userId });
+        return UserId.make({ id: session.userId, token });
       },
       (effect) =>
         Effect.catchTag(effect, "SessionNotFoundError", () => Effect.fail(new Unauthorized())),

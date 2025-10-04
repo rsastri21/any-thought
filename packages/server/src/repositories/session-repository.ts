@@ -33,13 +33,14 @@ export class SessionRepository extends Effect.Service<SessionRepository>()("Sess
     );
 
     const refresh = Effect.fn("SessionRepository.refresh")(
-      function* (sessionId: typeof Session.fields.id.Type) {
+      function* (token: string) {
+        const sessionId = getSessionId(token);
         const exists = yield* redis.execute((client) =>
           client.hExists(`session:${sessionId}`, "expiresAt"),
         );
         if (exists === 0) {
           return yield* Effect.fail(
-            new SessionNotFoundError({ message: `No session found with id: ${sessionId}.` }),
+            new SessionNotFoundError({ message: `No session found for token: ${token}.` }),
           );
         }
         const now = yield* DateTime.now;

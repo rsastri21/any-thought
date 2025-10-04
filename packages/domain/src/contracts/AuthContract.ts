@@ -3,6 +3,7 @@ import { Forbidden } from "@effect/platform/HttpApiError";
 import { Schema } from "effect";
 import { SessionNotFoundError } from "../models/Session.js";
 import { User, UserAlreadyExistsError, UserNotFoundError } from "../models/User.js";
+import { Authorization } from "../middlewares/AuthMiddleware.js";
 
 const Password = Schema.Trim.pipe(Schema.minLength(8));
 
@@ -47,6 +48,7 @@ export class AuthGroup extends HttpApiGroup.make("auth")
   .add(
     HttpApiEndpoint.post("signout", "/signout")
       .addSuccess(Schema.Void)
-      .addError(SessionNotFoundError),
+      .addError(SessionNotFoundError)
+      .middleware(Authorization),
   )
   .prefix("/auth") {}

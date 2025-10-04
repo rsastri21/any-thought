@@ -1,6 +1,6 @@
 import { HttpApiBuilder } from "@effect/platform";
 import { DomainApi } from "@org/domain/domain-api";
-import { security } from "@org/domain/middlewares/AuthMiddleware";
+import { CurrentUser, security } from "@org/domain/middlewares/AuthMiddleware";
 import { Effect, Redacted } from "effect";
 import { AuthService } from "../services/auth-service.js";
 
@@ -21,9 +21,10 @@ export const AuthLive = HttpApiBuilder.group(
           return yield* HttpApiBuilder.securitySetCookie(security, Redacted.make(token));
         }),
       )
-      .handle("signout", (request) =>
+      .handle("signout", () =>
         Effect.gen(function* () {
-          const token = request.request.cookies["x_at_auth_token"];
+          const currentUser = yield* CurrentUser;
+          const token = currentUser.token;
           yield* auth.signout(token).pipe(Effect.withSpan("AuthLive.signout"));
           return yield* HttpApiBuilder.securitySetCookie(security, Redacted.make(""));
         }),

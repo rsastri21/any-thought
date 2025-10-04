@@ -38,4 +38,5 @@ export class AuthUser extends User.extend<AuthUser>("AuthUser")({
 
 export class UserId extends Schema.Class<UserId>("UserId")({
   id: User.fields.id,
+  token: Schema.String,
 }) {}

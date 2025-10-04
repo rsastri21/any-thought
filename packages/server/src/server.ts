@@ -7,6 +7,7 @@ import { AuthLive } from "./api/auth-live.js";
 import { DatabaseService } from "./db/database.js";
 import { AuthService } from "./services/auth-service.js";
 import { RedisService } from "./redis/redis.js";
+import { AuthorizationLive } from "./middlewares/auth-middleware-live.js";
 
 const HealthLive = HttpApiBuilder.group(DomainApi, "health", (handlers) =>
   handlers.handle("health", () => Effect.succeed("OK")),
@@ -25,6 +26,7 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   HttpServer.withLogAddress,
   Layer.provide(CorsLive),
   Layer.provide(ApiLive),
+  Layer.provide(AuthorizationLive),
   Layer.merge(Layer.effectDiscard(RedisService.use((redis) => redis.setupConnectionListeners))),
   Layer.merge(Layer.effectDiscard(DatabaseService.use((db) => db.setupConnectionListeners))),
   Layer.provide(AuthService.Default),
