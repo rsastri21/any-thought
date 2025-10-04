@@ -75,16 +75,11 @@ export class DatabaseService extends Effect.Service<DatabaseService>()("Database
   dependencies: [],
   scoped: Effect.gen(function* () {
     const databaseUrl = yield* Config.redacted("DATABASE_URL");
-    const env = yield* Config.literal(
-      "development",
-      "production",
-    )("NODE_ENV").pipe(Config.withDefault("development"));
     const pool = yield* Effect.acquireRelease(
       Effect.sync(
         () =>
           new pg.Pool({
             connectionString: Redacted.value(databaseUrl),
-            ssl: env === "production",
             idleTimeoutMillis: 0,
             connectionTimeoutMillis: 0,
           }),
