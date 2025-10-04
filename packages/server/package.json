@@ -17,6 +17,7 @@
     "build-annotate": "babel build/esm --plugins annotate-pure-calls --out-dir build/esm --source-maps",
     "check": "tsc -b tsconfig.json",
     "dev": "dotenv -e '../../.env' tsx watch ./src/server.ts",
+    "start": "dotenv -e '../../.env' tsx ./build/esm/server.js",
     "test": "vitest --exclude **/*.integ.test.ts",
     "test:integ": "dotenv -e '../../.env' vitest integ",
     "coverage": "vitest --coverage --exclude '**/*.integ.test.ts'",
