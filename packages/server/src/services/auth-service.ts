@@ -62,7 +62,7 @@ export class AuthService extends Effect.Service<AuthService>()("AuthService", {
 
     const signout = Effect.fn("AuthService.signout")(function* (token: string) {
       const session = yield* sessionRepo.get(token);
-      return yield* sessionRepo.del(session.userId, session.id);
+      return yield* sessionRepo.del(session.userId, token);
     });
 
     const validateRequest = Effect.fn("AuthService.validateRequest")(
