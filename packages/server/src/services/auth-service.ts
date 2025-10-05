@@ -16,7 +16,7 @@ import {
 const AuthUserFromSignUpPayload = Schema.transformOrFail(SignUpPayload, AuthUser, {
   strict: true,
   decode: Effect.fnUntraced(function* (signUpPayload) {
-    const salt = randomBytes(128).toString();
+    const salt = randomBytes(128).toString("base64");
     const password = yield* hashPassword(signUpPayload.password, salt);
     return yield* ParseResult.succeed({
       id: generateIdFromEntropySize(ENTROPY_SIZE),
