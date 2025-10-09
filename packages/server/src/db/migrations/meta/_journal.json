@@ -15,6 +15,13 @@
       "when": 1755745163530,
       "tag": "0001_magenta_celestials",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1759986581536,
+      "tag": "0002_eminent_the_hand",
+      "breakpoints": true
     }
   ]
 }
