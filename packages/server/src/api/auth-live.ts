@@ -17,7 +17,6 @@ export const AuthLive = HttpApiBuilder.group(
       .handle("login", (request) =>
         Effect.gen(function* () {
           const token = yield* auth.login(request.payload).pipe(Effect.withSpan("AuthLive.login"));
-          console.log(token);
           return yield* HttpApiBuilder.securitySetCookie(security, Redacted.make(token), {
             path: "/",
           });

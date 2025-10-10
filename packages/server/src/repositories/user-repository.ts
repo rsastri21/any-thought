@@ -65,13 +65,13 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
 
     const findUserById = db.makeQuery((execute, input: typeof User.fields.id.Type) =>
       execute((client) =>
-        client.query.users.findFirst({
+        client.query.users.findMany({
           columns: { password: false, salt: false },
           where: eq(DbSchema.users.id, input),
         }),
       ).pipe(
         Effect.flatMap(Option.fromNullable),
-        Effect.flatMap(Schema.decode(User)),
+        Effect.flatMap(Schema.decode(Schema.Array(User))),
         Effect.catchTags({
           DatabaseError: Effect.die,
           NoSuchElementException: () =>
@@ -79,6 +79,25 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
           ParseError: Effect.die,
         }),
         Effect.withSpan("UserRepository.findUserById"),
+      ),
+    );
+
+    const findUserByUsername = db.makeQuery((execute, input: typeof User.fields.username.Type) =>
+      execute((client) =>
+        client.query.users.findMany({
+          columns: { password: false, salt: false },
+          where: eq(DbSchema.users.username, input),
+        }),
+      ).pipe(
+        Effect.flatMap(Option.fromNullable),
+        Effect.flatMap(Schema.decode(Schema.Array(User))),
+        Effect.catchTags({
+          DatabaseError: Effect.die,
+          NoSuchElementException: () =>
+            new UserNotFoundError({ message: `User with username ${input} not found.` }),
+          ParseError: Effect.die,
+        }),
+        Effect.withSpan("UserRepository.findUserByUsername"),
       ),
     );
 
@@ -151,6 +170,7 @@ export class UserRepository extends Effect.Service<UserRepository>()("UserReposi
       create,
       update,
       findUserById,
+      findUserByUsername,
       findAuthUserById,
       findAuthUserByUsername,
       findAll,

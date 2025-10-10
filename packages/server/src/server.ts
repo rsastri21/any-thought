@@ -8,12 +8,17 @@ import { DatabaseService } from "./db/database.js";
 import { AuthService } from "./services/auth-service.js";
 import { RedisService } from "./redis/redis.js";
 import { AuthorizationLive } from "./middlewares/auth-middleware-live.js";
+import { UsersLive } from "./api/users-live.js";
+import { UserRepository } from "./repositories/user-repository.js";
+import { SessionRepository } from "./repositories/session-repository.js";
 
 const HealthLive = HttpApiBuilder.group(DomainApi, "health", (handlers) =>
   handlers.handle("health", () => Effect.succeed("OK")),
 );
 
-const ApiLive = HttpApiBuilder.api(DomainApi).pipe(Layer.provide([AuthLive, HealthLive]));
+const ApiLive = HttpApiBuilder.api(DomainApi).pipe(
+  Layer.provide([AuthLive, HealthLive, UsersLive]),
+);
 
 const CorsLive = HttpApiBuilder.middlewareCors({
   allowedOrigins: ["*"],
@@ -29,6 +34,8 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(AuthorizationLive),
   Layer.merge(Layer.effectDiscard(RedisService.use((redis) => redis.setupConnectionListeners))),
   Layer.merge(Layer.effectDiscard(DatabaseService.use((db) => db.setupConnectionListeners))),
+  Layer.provide(UserRepository.Default),
+  Layer.provide(SessionRepository.Default),
   Layer.provide(AuthService.Default),
   Layer.provide(DatabaseService.Default),
   Layer.provide(RedisService.Default),

@@ -72,7 +72,7 @@ describe("UserRepository Integration Tests", () => {
       Effect.fnUntraced(function* () {
         const userRepo = yield* UserRepository;
         const createdUser = yield* userRepo.create(testAuthUser3);
-        const user = yield* userRepo.findUserById(createdUser.id);
+        const [user] = yield* userRepo.findUserById(createdUser.id);
 
         expect(user).toBeDefined();
         expect(user.id).toEqual(createdUser.id);
