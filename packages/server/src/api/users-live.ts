@@ -1,10 +1,11 @@
 import { HttpApiBuilder } from "@effect/platform";
+import type { ByIdOrUsername } from "@org/domain/contracts/UsersContract";
 import { DomainApi } from "@org/domain/domain-api";
+import { CurrentUser, security } from "@org/domain/middlewares/AuthMiddleware";
 import type { Schema } from "effect";
-import { Effect, Match } from "effect";
+import { Effect, Match, Redacted } from "effect";
 import { SessionRepository } from "../repositories/session-repository.js";
 import { UserRepository } from "../repositories/user-repository.js";
-import type { ByIdOrUsername } from "@org/domain/contracts/UsersContract";
 
 export const UsersLive = HttpApiBuilder.group(
   DomainApi,
@@ -32,6 +33,24 @@ export const UsersLive = HttpApiBuilder.group(
           yield* userRepo.del(userId);
         }),
       )
-      .handle("get", (request) => getUsers(request.urlParams));
+      .handle("get", (request) => getUsers(request.urlParams))
+      .handle("me", () =>
+        Effect.gen(function* () {
+          const currentUser = yield* CurrentUser;
+          const [user] = yield* userRepo.findUserById(currentUser.id);
+          return user;
+        }).pipe(Effect.catchTag("UserNotFoundError", Effect.die)),
+      )
+      .handle("deleteme", () =>
+        Effect.gen(function* () {
+          const currentUser = yield* CurrentUser;
+          yield* Effect.all([userRepo.del(currentUser.id), sessionRepo.delAll(currentUser.id)], {
+            concurrency: "unbounded",
+          });
+          return yield* HttpApiBuilder.securitySetCookie(security, Redacted.make(""), {
+            path: "/",
+          });
+        }).pipe(Effect.catchTag("UserNotFoundError", Effect.die)),
+      );
   }),
 );

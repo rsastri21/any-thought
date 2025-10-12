@@ -25,6 +25,7 @@ export class UsersGroup extends HttpApiGroup.make("users")
       .addSuccess(Schema.Array(User))
       .addError(UserNotFoundError),
   )
+  .add(HttpApiEndpoint.get("me", "/me").addSuccess(User))
   .add(
     HttpApiEndpoint.del("delete", "/delete/:id")
       .setPath(
@@ -35,5 +36,6 @@ export class UsersGroup extends HttpApiGroup.make("users")
       .addSuccess(Schema.Void)
       .addError(UserNotFoundError),
   )
+  .add(HttpApiEndpoint.del("deleteme", "/deleteme").addSuccess(Schema.Void))
   .middleware(Authorization)
   .prefix("/users") {}
