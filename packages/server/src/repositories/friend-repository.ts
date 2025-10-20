@@ -11,7 +11,7 @@ import { DbSchema } from "../db/index.js";
 
 export class FriendRepository extends Effect.Service<FriendRepository>()("FriendRepository", {
   dependencies: [DatabaseService.Default],
-  effect: Effect.gen(function*() {
+  effect: Effect.gen(function* () {
     const db = yield* DatabaseService;
 
     const create = db.makeQuery((execute, input: typeof FriendRelationship.Type) =>
@@ -27,8 +27,8 @@ export class FriendRepository extends Effect.Service<FriendRepository>()("Friend
           DatabaseError: (error) =>
             error.type === "unique_violation"
               ? Effect.fail(
-                new FriendAlreadyExistsError({ message: "Friend relationship already exists." }),
-              )
+                  new FriendAlreadyExistsError({ message: "Friend relationship already exists." }),
+                )
               : Effect.die(error),
           NoSuchElementException: () => Effect.die(""),
           ParseError: Effect.die,
@@ -94,7 +94,7 @@ export class FriendRepository extends Effect.Service<FriendRepository>()("Friend
               new FriendNotFoundError({ message: `Friend with users ${input} not found.` }),
             ParseError: Effect.die,
           }),
-          Effect.withSpan("UserRepository.del"),
+          Effect.withSpan("FriendRepository.del"),
         ),
     );
 
@@ -105,4 +105,4 @@ export class FriendRepository extends Effect.Service<FriendRepository>()("Friend
       del,
     } as const;
   }),
-}) { }
+}) {}
