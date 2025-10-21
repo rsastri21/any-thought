@@ -1,15 +1,15 @@
 import { DateTime, Effect, Match, Option } from "effect";
 import { FriendRepository } from "../repositories/friend-repository.js";
 import { FriendRequestRepository } from "../repositories/friend-request-repository.js";
-import {
-  FriendRelationship,
-  FriendRequestUpdate,
-  type FriendRequestStatus,
-  type FriendRequest,
+import type {
+  EngageFriendRequestPayload,
+  EngageRequestAction,
+  FriendRequestStatus,
+  FriendRequest,
+  FriendRequestQueryMode,
 } from "@org/domain/models/Friends";
+import { FriendRelationship, FriendRequestUpdate } from "@org/domain/models/Friends";
 import type { User } from "@org/domain/models/User";
-
-type EngageRequestAction = "accept" | "reject";
 
 export class FriendService extends Effect.Service<FriendService>()("FriendService", {
   dependencies: [FriendRepository.Default, FriendRequestRepository.Default],
@@ -23,12 +23,10 @@ export class FriendService extends Effect.Service<FriendService>()("FriendServic
       return yield* friendRequestRepo.create(input);
     });
 
-    const engageFriendRequest = Effect.fn("FriendService.engageFriendRequest")(function* (input: {
-      requester: typeof FriendRequest.fields.requester.Type;
-      requestee: typeof FriendRequest.fields.requestee.Type;
-      action: EngageRequestAction;
-    }) {
-      const engageActionMatcher = Match.type<EngageRequestAction>().pipe(
+    const engageFriendRequest = Effect.fn("FriendService.engageFriendRequest")(function* (
+      input: typeof EngageFriendRequestPayload.Type,
+    ) {
+      const engageActionMatcher = Match.type<typeof EngageRequestAction.Type>().pipe(
         Match.when("accept", function* () {
           const now = yield* DateTime.now;
           const [friendRequest, friend] = yield* Effect.all(
@@ -78,10 +76,10 @@ export class FriendService extends Effect.Service<FriendService>()("FriendServic
     const listFriendRequests = Effect.fn("FriendService.listFriendRequests")(function* (input: {
       userId: typeof User.fields.id.Type;
       status: typeof FriendRequestStatus.Type;
-      mode: "to" | "from";
+      mode: typeof FriendRequestQueryMode.Type;
     }) {
       const args = { userId: input.userId, status: input.status };
-      const listFriendRequestMatcher = Match.type<"to" | "from">().pipe(
+      const listFriendRequestMatcher = Match.type<typeof FriendRequestQueryMode.Type>().pipe(
         Match.when("to", () => friendRequestRepo.findRequestsToUser(args)),
         Match.when("from", () => friendRequestRepo.findRequestsFromUser(args)),
         Match.exhaustive,

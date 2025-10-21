@@ -48,17 +48,45 @@ export class FriendRelationship extends Schema.Class<FriendRelationship>("Friend
   createdAt: Schema.DateTimeUtcFromDate,
 }) {}
 
-export const FriendRequestStatus = Schema.Literal("pending", "accepted", "rejected");
+export class RemoveFriendRelationshipPayload extends Schema.Class<RemoveFriendRelationshipPayload>(
+  "RemoveFriendRelationshipPayload",
+)({
+  userIdLeft: FriendRelationship.fields.userIdLeft,
+  userIdRight: FriendRelationship.fields.userIdRight,
+}) {}
 
-export class FriendRequestUpdate extends Schema.Class<FriendRequestUpdate>("FriendRequestUpdate")({
+export const FriendRequestStatus = Schema.Literal("pending", "accepted", "rejected");
+export const FriendRequestQueryMode = Schema.Literal("to", "from");
+
+export class FriendRequestKey extends Schema.Class<FriendRequestKey>("FriendRequestKey")({
   requester: User.fields.id,
   requestee: User.fields.id,
+}) {}
+
+export class FriendRequestUpdate extends FriendRequestKey.extend<FriendRequestUpdate>(
+  "FriendRequestUpdate",
+)({
   status: FriendRequestStatus,
 }) {}
 
-export class FriendRequest extends Schema.Class<FriendRequest>("FriendRequest")({
-  requester: User.fields.id,
-  requestee: User.fields.id,
+export class FriendRequest extends FriendRequestKey.extend<FriendRequest>("FriendRequest")({
   status: FriendRequestStatus,
   createdAt: Schema.DateTimeUtcFromDate,
 }) {}
+
+export class CreateFriendRequestPayload extends FriendRequestUpdate.extend<CreateFriendRequestPayload>(
+  "CreateFriendRequestPayload",
+)({}) {}
+
+export const EngageRequestAction = Schema.Literal("accept", "reject");
+
+export class EngageFriendRequestPayload extends FriendRequestKey.extend<EngageFriendRequestPayload>(
+  "EngageFriendRequestPayload",
+)({
+  action: EngageRequestAction,
+}) {}
+
+export const EngageFriendRequestResponse = Schema.Tuple(
+  FriendRequest,
+  Schema.Option(FriendRelationship),
+);
