@@ -5,13 +5,14 @@ import {
   ArnPrincipal,
   Effect,
   ManagedPolicy,
+  OpenIdConnectProvider,
   PolicyStatement,
   Role,
   User,
+  WebIdentityPrincipal,
 } from "aws-cdk-lib/aws-iam";
 import { BlockPublicAccess, Bucket } from "aws-cdk-lib/aws-s3";
 import type { Construct } from "constructs";
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 interface InfraStackProps extends cdk.StackProps {
   stage: string;
@@ -22,6 +23,27 @@ export class InfraStack extends cdk.Stack {
     super(scope, id, props);
 
     const stage = props.stage.toLowerCase();
+
+    // Create GitHub infra for GitHub Actions
+    if (stage === "prod") {
+      const github = new OpenIdConnectProvider(this, `GitHubIdentityProvider-${stage}`, {
+        url: "https://token.actions.githubusercontent.com",
+        clientIds: ["sts.amazonaws.com"],
+        thumbprints: [
+          "6938fd4d98bab03faadb97b34396831e3780aea1",
+          "1c58a3a8518e8759bf075b76b750d4f2df264fcd",
+        ],
+      });
+      new Role(this, `GitHubDeployRole-${stage}`, {
+        roleName: "any-thought-production-github",
+        assumedBy: new WebIdentityPrincipal(github.openIdConnectProviderArn, {
+          StringLike: {
+            ["token.actions.githubusercontent.com:sub"]: "repo:rsastri21/any-thought:*",
+          },
+        }),
+        managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName("AdministratorAccess")],
+      });
+    }
 
     const bucket = new Bucket(this, `Photos-${stage}`, {
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
