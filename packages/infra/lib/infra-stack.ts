@@ -1,16 +1,77 @@
-import * as cdk from 'aws-cdk-lib';
-import { Construct } from 'constructs';
+import * as cdk from "aws-cdk-lib";
+import { Distribution, S3OriginAccessControl, Signing } from "aws-cdk-lib/aws-cloudfront";
+import { S3BucketOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
+import {
+  ArnPrincipal,
+  Effect,
+  ManagedPolicy,
+  PolicyStatement,
+  Role,
+  User,
+} from "aws-cdk-lib/aws-iam";
+import { BlockPublicAccess, Bucket } from "aws-cdk-lib/aws-s3";
+import type { Construct } from "constructs";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 
+interface InfraStackProps extends cdk.StackProps {
+  stage: string;
+}
+
 export class InfraStack extends cdk.Stack {
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props: InfraStackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const stage = props.stage.toLowerCase();
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'InfraQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const bucket = new Bucket(this, `Photos-${stage}`, {
+      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+      enforceSSL: true,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    const oac = new S3OriginAccessControl(this, `PhotosOAC-${stage}`, {
+      signing: Signing.SIGV4_NO_OVERRIDE,
+    });
+
+    const s3Origin = S3BucketOrigin.withOriginAccessControl(bucket, {
+      originAccessControl: oac,
+    });
+
+    const distribution = new Distribution(this, `PhotosCDN-${stage}`, {
+      defaultBehavior: {
+        origin: s3Origin,
+      },
+    });
+
+    // Create IAM User for server AWS access
+    const user = new User(this, `ServerAccessUser-${stage}`);
+
+    const assumeRoleOnlyPolicy = new PolicyStatement({
+      actions: ["sts:AssumeRole"],
+      resources: ["*"],
+      effect: Effect.ALLOW,
+    });
+    const assumeRoleManagedPolicy = new ManagedPolicy(this, `AssumeRoleManagedPolicy-${stage}`, {
+      statements: [assumeRoleOnlyPolicy],
+    });
+    assumeRoleManagedPolicy.attachToUser(user);
+
+    // Create role for server access
+    const role = new Role(this, `ServerAccessRole-${stage}`, {
+      assumedBy: new ArnPrincipal(user.userArn),
+      roleName: `server-access-role-${stage}`,
+    });
+
+    bucket.grantReadWrite(role);
+    distribution.grantCreateInvalidation(role);
+
+    new cdk.CfnOutput(this, `PhotosBucketName-${stage}`, {
+      exportName: `PhotosBucketName-${stage}`,
+      value: bucket.bucketName,
+    });
+    new cdk.CfnOutput(this, `PhotosCdnDomain-${stage}`, {
+      exportName: `PhotosCdnDomain-${stage}`,
+      value: distribution.distributionDomainName,
+    });
   }
 }
