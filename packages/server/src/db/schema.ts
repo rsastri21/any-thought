@@ -1,5 +1,14 @@
 import { relations } from "drizzle-orm";
-import { pgEnum, pgTable, primaryKey, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import {
+  integer,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
@@ -18,8 +27,10 @@ export const users = pgTable("users", {
 });
 
 export const usersRelations = relations(users, ({ many }) => ({
-  friends: many(friends),
-  friendRequests: many(friendRequests),
+  friends: many(friends, { relationName: "friends" }),
+  friendRequests: many(friendRequests, { relationName: "friendRequests" }),
+  posts: many(posts),
+  assets: many(assets),
 }));
 
 export const friends = pgTable(
@@ -85,6 +96,58 @@ export const friendRequestsRelations = relations(friendRequests, ({ one }) => ({
   }),
   requestee: one(users, {
     fields: [friendRequests.requestee],
+    references: [users.id],
+  }),
+}));
+
+export const assetStatus = pgEnum("asset_status", ["processing", "active"]);
+
+export const posts = pgTable("posts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  author: text("author")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  caption: text("caption"),
+  likes: integer("likes").notNull().default(0),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .notNull()
+    .defaultNow(),
+});
+
+export const postsRelations = relations(posts, ({ many, one }) => ({
+  author: one(users, {
+    fields: [posts.author],
+    references: [users.id],
+  }),
+  assets: many(assets),
+}));
+
+export const assets = pgTable("assets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  postId: uuid("post_id").references(() => posts.id, { onDelete: "set null" }),
+  url: text("url").notNull(),
+  status: assetStatus().notNull().default("processing"),
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+    mode: "date",
+  })
+    .notNull()
+    .defaultNow(),
+});
+
+export const assetsRelations = relations(assets, ({ one }) => ({
+  posts: one(posts, {
+    fields: [assets.postId],
+    references: [posts.id],
+  }),
+  users: one(users, {
+    fields: [assets.userId],
     references: [users.id],
   }),
 }));
