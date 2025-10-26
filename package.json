@@ -51,10 +51,15 @@
   "pnpm": {
     "patchedDependencies": {
       "babel-plugin-annotate-pure-calls@0.4.0": "patches/babel-plugin-annotate-pure-calls@0.4.0.patch"
-    }
+    },
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
   },
   "dependencies": {
     "@effect/platform": "^0.90.6",
+    "@effect/rpc": "^0.71.1",
     "dotenv-cli": "^10.0.0"
   }
 }
