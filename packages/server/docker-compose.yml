@@ -17,14 +17,6 @@ services:
     command: redis-server --save 20 1 --loglevel warning --requirepass local_redis_password
     volumes:
       - cache:/data
-  grafana:
-    image: grafana/otel-lgtm:0.8.6
-    container_name: grafana
-    restart: unless-stopped
-    ports:
-      - "4000:3000"
-      - "4317:4317"
-      - "4318:4318"
 volumes:
   db:
     driver: local
