@@ -13,6 +13,7 @@ import { UserRepository } from "./repositories/user-repository.js";
 import { SessionRepository } from "./repositories/session-repository.js";
 import { FriendsLive } from "./api/friends-live.js";
 import { FriendService } from "./services/friends-service.js";
+import { AwsCredentialsService } from "./services/aws-credentials-service.js";
 
 const HealthLive = HttpApiBuilder.group(DomainApi, "health", (handlers) =>
   handlers.handle("health", () => Effect.succeed("OK")),
@@ -34,12 +35,16 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(CorsLive),
   Layer.provide(ApiLive),
   Layer.provide(AuthorizationLive),
+  Layer.merge(
+    Layer.effectDiscard(AwsCredentialsService.use((service) => service.setupCredentialsRefresh)),
+  ),
   Layer.merge(Layer.effectDiscard(RedisService.use((redis) => redis.setupConnectionListeners))),
   Layer.merge(Layer.effectDiscard(DatabaseService.use((db) => db.setupConnectionListeners))),
   Layer.provide(FriendService.Default),
   Layer.provide(UserRepository.Default),
   Layer.provide(SessionRepository.Default),
   Layer.provide(AuthService.Default),
+  Layer.provide(AwsCredentialsService.Default),
   Layer.provide(DatabaseService.Default),
   Layer.provide(RedisService.Default),
   Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),
