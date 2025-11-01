@@ -28,6 +28,7 @@
     "db:studio": "dotenv -e '../../.env' drizzle-kit studio"
   },
   "dependencies": {
+    "@effect-aws/client-s3": "^1.10.3",
     "@effect/platform": "latest",
     "@effect/platform-node": "latest",
     "@org/domain": "workspace:^",

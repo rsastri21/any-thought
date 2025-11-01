@@ -1,21 +1,15 @@
 import { Config, Data, Effect, pipe, Redacted, Schedule, Schema } from "effect";
 import { RedisService } from "../redis/redis.js";
 import { STS } from "itty-aws/sts";
-import { AWS_ROLE } from "../utils/constants.js";
+import { AWS_ROLE, Stage } from "../utils/constants.js";
+import { AwsCredentials } from "../utils/aws-credential-utils.js";
 
 const REFRESH_INTERVAL = "30 minutes";
 const CREDENTIALS_KEY = "at-server-aws-credentials";
-const Stage = Schema.Config("NODE_ENV", Schema.Literal("development", "production"));
 
 class EmptyCredentialsResponse extends Data.TaggedError("EmptyCredentialsResponse")<{
   message: string;
 }> {}
-
-const AwsCredentials = Schema.Struct({
-  AccessKeyId: Schema.String,
-  SecretAccessKey: Schema.String,
-  SessionToken: Schema.String,
-});
 
 export class AwsCredentialsService extends Effect.Service<AwsCredentialsService>()(
   "AwsCredentialsService",
