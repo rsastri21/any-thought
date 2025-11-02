@@ -1,6 +1,8 @@
 import * as cdk from "aws-cdk-lib";
 import { Distribution, S3OriginAccessControl, Signing } from "aws-cdk-lib/aws-cloudfront";
 import { S3BucketOrigin } from "aws-cdk-lib/aws-cloudfront-origins";
+import * as events from "aws-cdk-lib/aws-events";
+import * as targets from "aws-cdk-lib/aws-events-targets";
 import {
   ArnPrincipal,
   Effect,
@@ -50,6 +52,7 @@ export class InfraStack extends cdk.Stack {
       blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
       enforceSSL: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      eventBridgeEnabled: stage === "prod",
     });
 
     const oac = new S3OriginAccessControl(this, `PhotosOAC-${stage}`, {
@@ -68,6 +71,28 @@ export class InfraStack extends cdk.Stack {
 
     // Create secret for connection to backend server
     const secret = new Secret(this, `AnyThoughtSecret-${stage}`);
+
+    // EventBridge to notify backend server of asset upload
+    if (stage === "prod") {
+      const connection = new events.Connection(this, `ServerConnection-${stage}`, {
+        authorization: events.Authorization.apiKey(
+          "x_at_aws_token",
+          cdk.SecretValue.secretsManager(secret.secretArn),
+        ),
+      });
+      const destination = new events.ApiDestination(this, `ServerDestination-${stage}`, {
+        connection,
+        endpoint: "https://backend-production-17e3b.up.railway.app/assets/upload-complete",
+        httpMethod: events.HttpMethod.POST,
+      });
+      new events.Rule(this, `ServerRule-${stage}`, {
+        eventPattern: {
+          source: ["aws.s3"],
+          detailType: ["Object Created"],
+        },
+        targets: [new targets.ApiDestination(destination)],
+      });
+    }
 
     // Create IAM User for server AWS access
     const user = new User(this, `ServerAccessUser-${stage}`);
