@@ -4,7 +4,7 @@ import { AwsCredentialsService } from "../services/aws-credentials-service.js";
 import { AWS_CONFIG, Stage } from "../utils/constants.js";
 import { SecretsManager } from "itty-aws/secrets-manager";
 import { LowercaseAwsCredentials } from "../utils/aws-credential-utils.js";
-import { Unauthorized } from "@effect/platform/HttpApiError";
+import { NotFound, Unauthorized } from "@effect/platform/HttpApiError";
 
 export const AwsAuthorizationLive = Layer.effect(
   AwsAuthorization,
@@ -27,9 +27,7 @@ export const AwsAuthorizationLive = Layer.effect(
               SecretId: AWS_CONFIG[stage].secret,
             })
             .pipe(Effect.catchAll(Effect.die));
-          yield* Effect.fail(new Unauthorized()).pipe(
-            Effect.when(() => !secretResponse.SecretString),
-          );
+          yield* Effect.die(new NotFound()).pipe(Effect.when(() => !secretResponse.SecretString));
           const secret = secretResponse.SecretString!;
           yield* Effect.fail(new Unauthorized()).pipe(
             Effect.when(() => secret === Redacted.value(token)),
