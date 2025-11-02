@@ -3,24 +3,28 @@ import { NodeHttpServer, NodeRuntime } from "@effect/platform-node";
 import { DomainApi } from "@org/domain/domain-api";
 import { Duration, Effect, Layer, Schedule } from "effect";
 import { createServer } from "node:http";
+import { AssetsLive } from "./api/assets-live.js";
 import { AuthLive } from "./api/auth-live.js";
-import { DatabaseService } from "./db/database.js";
-import { AuthService } from "./services/auth-service.js";
-import { RedisService } from "./redis/redis.js";
-import { AuthorizationLive } from "./middlewares/auth-middleware-live.js";
-import { UsersLive } from "./api/users-live.js";
-import { UserRepository } from "./repositories/user-repository.js";
-import { SessionRepository } from "./repositories/session-repository.js";
 import { FriendsLive } from "./api/friends-live.js";
-import { FriendService } from "./services/friends-service.js";
+import { UsersLive } from "./api/users-live.js";
+import { DatabaseService } from "./db/database.js";
+import { AuthorizationLive } from "./middlewares/auth-middleware-live.js";
+import { AwsAuthorizationLive } from "./middlewares/aws-auth-middleware-live.js";
+import { RedisService } from "./redis/redis.js";
+import { AssetRepository } from "./repositories/asset-repository.js";
+import { SessionRepository } from "./repositories/session-repository.js";
+import { UserRepository } from "./repositories/user-repository.js";
+import { AuthService } from "./services/auth-service.js";
 import { AwsCredentialsService } from "./services/aws-credentials-service.js";
+import { FriendService } from "./services/friends-service.js";
+import { S3Service } from "./services/s3-service.js";
 
 const HealthLive = HttpApiBuilder.group(DomainApi, "health", (handlers) =>
   handlers.handle("health", () => Effect.succeed("OK")),
 );
 
 const ApiLive = HttpApiBuilder.api(DomainApi).pipe(
-  Layer.provide([AuthLive, HealthLive, UsersLive, FriendsLive]),
+  Layer.provide([AuthLive, HealthLive, UsersLive, FriendsLive, AssetsLive]),
 );
 
 const CorsLive = HttpApiBuilder.middlewareCors({
@@ -35,6 +39,7 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(CorsLive),
   Layer.provide(ApiLive),
   Layer.provide(AuthorizationLive),
+  Layer.provide(AwsAuthorizationLive),
   Layer.merge(
     Layer.effectDiscard(AwsCredentialsService.use((service) => service.setupCredentialsRefresh)),
   ),
@@ -43,8 +48,10 @@ const HttpLive = HttpApiBuilder.serve(HttpMiddleware.logger).pipe(
   Layer.provide(FriendService.Default),
   Layer.provide(UserRepository.Default),
   Layer.provide(SessionRepository.Default),
+  Layer.provide(AssetRepository.Default),
   Layer.provide(AuthService.Default),
   Layer.provide(AwsCredentialsService.Default),
+  Layer.provide(S3Service.Default),
   Layer.provide(DatabaseService.Default),
   Layer.provide(RedisService.Default),
   Layer.provide(NodeHttpServer.layer(createServer, { port: 3000 })),

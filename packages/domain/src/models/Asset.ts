@@ -24,7 +24,7 @@ export class Asset extends Schema.Class<Asset>("Asset")({
 }) {}
 
 export class CreateAssetPayload extends Schema.Class<CreateAssetPayload>("CreateAssetPayload")(
-  Schema.Struct(Asset.fields).omit("id"),
+  Schema.Struct(Asset.fields),
 ) {}
 
 export class UpdateAssetPayload extends Schema.Class<UpdateAssetPayload>("UpdateAssetPayload")({
@@ -32,4 +32,15 @@ export class UpdateAssetPayload extends Schema.Class<UpdateAssetPayload>("Update
   postId: Asset.fields.postId,
   url: Asset.fields.url.pipe(Schema.optional),
   status: Asset.fields.status.pipe(Schema.optional),
+}) {}
+
+export class EventBridgeCreationEvent extends Schema.Class<EventBridgeCreationEvent>(
+  "EventBridgeCreationEvent",
+)({
+  "detail-type": Schema.Literal("Object Created"),
+  detail: Schema.Struct({
+    object: Schema.Struct({
+      key: Schema.String,
+    }),
+  }),
 }) {}
