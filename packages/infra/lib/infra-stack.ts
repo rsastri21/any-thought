@@ -12,6 +12,7 @@ import {
   WebIdentityPrincipal,
 } from "aws-cdk-lib/aws-iam";
 import { BlockPublicAccess, Bucket } from "aws-cdk-lib/aws-s3";
+import { Secret } from "aws-cdk-lib/aws-secretsmanager";
 import type { Construct } from "constructs";
 
 interface InfraStackProps extends cdk.StackProps {
@@ -65,6 +66,9 @@ export class InfraStack extends cdk.Stack {
       },
     });
 
+    // Create secret for connection to backend server
+    const secret = new Secret(this, `AnyThoughtSecret-${stage}`);
+
     // Create IAM User for server AWS access
     const user = new User(this, `ServerAccessUser-${stage}`);
 
@@ -86,6 +90,7 @@ export class InfraStack extends cdk.Stack {
 
     bucket.grantReadWrite(role);
     distribution.grantCreateInvalidation(role);
+    secret.grantRead(role);
 
     new cdk.CfnOutput(this, `PhotosBucketName-${stage}`, {
       exportName: `PhotosBucketName-${stage}`,
